@@ -19,12 +19,12 @@ module.exports = MarkdownImageAssistant =
             title: "Preserve original file names"
             description: "When dragging and dropping files, whether to perserve original file names when copying over into the image directory"
             type: 'boolean'
-            default: false
+            default: true
         prependTargetFileName:
             title: "Prepend the target file name"
             description: "Whether to prepend the target file name when copying over the image. Overrides the \"Preserve Original Name\" setting."
             type: 'boolean'
-            default: true
+            default: false
         preserveFileNameInAssetsFolder:
             title: "Create per-file asset directories"
             description: "Creates a separate asset directory for each markdown file, e.g. `README.assets/`; setting `Image Directory` to a value other than the default of `assets/` overrides this option"
@@ -35,6 +35,11 @@ module.exports = MarkdownImageAssistant =
             description: "Local directory to copy images into; created if not found."
             type: 'string'
             default: defaultImageDir
+        imageURLPath:
+            title: "Image URL Path"
+            description: "path to insert into markdown, ignored if blank"
+            type: 'string'
+            default: ""
         insertHtmlOverMarkdown:
             title: "Insert image as Markup, instead of Markdown"
             description: "Insert an image as HTML Markup, `<img src=''>`, instead of Markdown, `![]()`.  Useful if you want to adjust image `width` or `height`"
@@ -105,6 +110,10 @@ module.exports = MarkdownImageAssistant =
         else
             assets_dir = path.basename(atom.config.get('markdown-image-assistant.imageDir'))
         assets_path = path.join(target_file, "..", assets_dir)
+        if atom.config.get('markdown-image-assistant.imageURLPath') != ""
+            link_path = path.join(atom.config.get('markdown-image-assistant.imageURLPath'),path.parse(target_file).name)
+        else
+            link_path = assets_dir
 
         md5 = crypto.createHash 'md5'
         md5.update(imgbuffer)
@@ -124,9 +133,9 @@ module.exports = MarkdownImageAssistant =
             fs.writeFile path.join(assets_path, img_filename), imgbuffer, 'binary', ()=>
                 console.log "Copied file over to #{assets_path}"
                 if atom.config.get('markdown-image-assistant.insertHtmlOverMarkdown')
-                  editor.insertText "<img alt=\"#{img_filename}\" src=\"#{assets_dir}/#{img_filename}\" width=\"\" height=\"\" >"
+                  editor.insertText "<img alt=\"#{img_filename}\" src=\"#{link_path}/#{img_filename}\" width=\"\" height=\"\" >"
                 else
-                  editor.insertText "![](#{assets_dir}/#{img_filename})"
+                  editor.insertText "![](#{link_path}/#{img_filename})"
 
         return false
 
